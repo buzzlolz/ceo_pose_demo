@@ -45,7 +45,7 @@ from pygame import mixer
 import tempfile
 import pygame
 
-VideoCapture_Id = 0
+VideoCapture_Id = 1
 
 
 @dataclasses.dataclass
@@ -692,20 +692,29 @@ class Ui(QtWidgets.QMainWindow):
         self.live_ax.clear()
         if not self.live_pose_world_landmarks:
             return
-        if self.live_pose_world_landmarks.landmark[23].y-self.live_pose_world_landmarks.landmark[24].y>0:
-            self.pose3d_direction =True
+        print('self.live_pose_world_landmarks.landmark[23].z',self.live_pose_world_landmarks.landmark[23].z)
+        print('self.live_pose_world_landmarks.landmark[24].z',self.live_pose_world_landmarks.landmark[24].z)
+
+        print('self.live_pose_world_landmarks.landmark[20].z',self.live_pose_world_landmarks.landmark[20].z)
+        if self.live_pose_world_landmarks.landmark[23].z-self.live_pose_world_landmarks.landmark[24].z>0:
+
+            self.pose3d_direction =False
+        else:
+            self.pose3d_direction = True
         vec_waist  = [self.live_pose_world_landmarks.landmark[23].x-self.live_pose_world_landmarks.landmark[24].x,self.live_pose_world_landmarks.landmark[23].y-self.live_pose_world_landmarks.landmark[24].y,self.live_pose_world_landmarks.landmark[23].z-self.live_pose_world_landmarks.landmark[24].z]
         # print(new_a1)
         self.pose3d_waist_angle = self.get_3d_angle(vec_waist,[1,0,0])
-        # print('self.pose3d_waist_angle',self.pose3d_waist_angle)
+        
         if  not self.pose3d_direction and self.pose3d_direction!='':
             pass
        
         else:
             if self.pose3d_waist_angle!='':
                 self.pose3d_waist_angle = -self.pose3d_waist_angle 
+        print("angle",self.pose3d_waist_angle)
         # self.fig = plt.figure()
         # self.ax = plt.axes(projection='3d')
+        # print('self.pose3d_waist_angle',self.pose3d_waist_angle)
         self.live_ax.view_init(elev=elevation, azim=azimuth)
         self.live_ax.set_zlim(-0.5,0.5)
         self.live_ax.set_ylim(-1,1)
@@ -717,9 +726,13 @@ class Ui(QtWidgets.QMainWindow):
                 (landmark.HasField('presence') and
                 landmark.presence < _PRESENCE_THRESHOLD)):
                 continue
-            # print('landmark',landmark)
+            # # print('landmark',landmark)
             x_p,y_p,z_p = self.rotate_3d(landmark,self.pose3d_waist_angle)
-            # print('change',x_p,y_p,z_p)
+            # if idx == 23 or idx == 24:
+            #     print('idx',idx)
+            #     print("angle",self.pose3d_waist_angle)
+            #     print('change',x_p,y_p,z_p,)
+            
             # x_p,y_p,z_p = landmark.x,landmark.y,landmark.z
             # print('change',x_p,y_p,z_p)
             self.live_ax.scatter3D(

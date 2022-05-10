@@ -730,22 +730,22 @@ class BlazePose_inf():
               # print('crotch_angle',video_crotch_angle)
               if action_index ==1:
                 # print('live_crotch_angle',live_crotch_angle)
-                # print('live_right_knee_angle',live_right_knee_angle)
-                # print('live_left_knee_angle',live_left_knee_angle)
+                print('live_right_knee_angle',live_right_knee_angle)
+                print('live_left_knee_angle',live_left_knee_angle)
 
                 # print('crotch_angle',video_crotch_angle)
                 # print('right_knee_angle',video_right_knee_angle)
                 # print('left_knee_angle',video_left_knee_angle)
                 
-                if (video_crotch_angle-25< live_crotch_angle < video_crotch_angle+25 )and (video_left_knee_angle-20 < live_left_knee_angle < video_left_knee_angle+20) and (video_right_knee_angle-20 < live_right_knee_angle < video_right_knee_angle+20) :
-                  print('ok')
+                if (video_crotch_angle-30< live_crotch_angle < video_crotch_angle+30 )and (video_left_knee_angle-30 < live_left_knee_angle < video_left_knee_angle+30) and (video_right_knee_angle-30 < live_right_knee_angle < video_right_knee_angle+30) :
+                  # print('ok')
                   return 'ok'
                 else:
-                  print('need down')
+                  # print('need down')
                   return 'sit'
               elif action_index==2:
                 
-                if live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1]<live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1] and  (video_left_knee_angle-25 < live_left_knee_angle < video_left_knee_angle+25) : 
+                if live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1]<live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1] and  (video_left_knee_angle-30 < live_left_knee_angle < video_left_knee_angle+30) : 
                   # print('ok')
                 # if landmarks_live[mp_pose.PoseLandmark.LEFT_KNEE.value][1]<landmarks_live[mp_pose.PoseLandmark.RIGHT_KNEE.value][1]:
                   return 'ok'
@@ -753,6 +753,14 @@ class BlazePose_inf():
                   # print('raise_leg_left')
                   return 'raise_leg_left'
               elif action_index==3:
+                
+                if live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1]<live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1] and (video_right_knee_angle-30 < live_right_knee_angle < video_right_knee_angle+30) : 
+                  # print('ok')
+                  return 'ok'
+                else:
+                  # print('raise_leg_right')
+                  return 'raise_leg_right'
+              elif action_index==4:
                 print('live_crotch_angle',live_crotch_angle)
                 print('live_right_knee_angle',live_right_knee_angle)
                 print('live_left_knee_angle',live_left_knee_angle)
@@ -761,24 +769,11 @@ class BlazePose_inf():
                 print('right_knee_angle',video_right_knee_angle)
                 print('left_knee_angle',video_left_knee_angle)
 
-                print(' live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1]', video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1])
-                print(' live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1]', video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1])
+                # print(' live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1]', video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1])
+                # print(' live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1]', video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1])
                 
-                if live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1]<live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1] and (video_right_knee_angle-25 < live_right_knee_angle < video_right_knee_angle+25) : 
-                  # print('ok')
-                  return 'ok'
-                else:
-                  # print('raise_leg_right')
-                  return 'raise_leg_right'
-              elif action_index==4:
-                print('crotch_angle',crotch_angle)
-                print('left_knee_angle',left_knee_angle)
-                # print('right knee angle',vidseo_right_knee_angle)
-                # print('left kenn angle',video_left_knee_angle)
-                # print('left knee point',landmarks_video[mp_pose.PoseLandmark.LEFT_KNEE.value])
-                # print('right knee point',landmarks_video[mp_pose.PoseLandmark.RIGHT_KNEE.value])
-                # print('video_crotch_angle',video_crotch_angle)
-                if (video_left_knee_angle-20 < live_left_knee_angle < video_left_knee_angle+20) and (video_crotch_angle-25< live_crotch_angle < video_crotch_angle+25 ): 
+               
+                if (video_left_knee_angle-30 < live_left_knee_angle < video_left_knee_angle+30) and (video_crotch_angle-30< live_crotch_angle < video_crotch_angle+30 ): 
                   # print('ok')
                   return 'ok'
                 # elif right_hip_angle<200:
@@ -794,7 +789,7 @@ class BlazePose_inf():
                 # print('left knee point',landmarks_video[mp_pose.PoseLandmark.LEFT_KNEE.value])
                 # print('right knee point',landmarks_video[mp_pose.PoseLandmark.RIGHT_KNEE.value])
                 # print('video_crotch_angle',video_crotch_angle)
-                if (video_right_knee_angle-20 < live_right_knee_angle < video_right_knee_angle+20) and (video_crotch_angle-25< live_crotch_angle < video_crotch_angle+25 ): 
+                if (video_right_knee_angle-30 < live_right_knee_angle < video_right_knee_angle+30) and (video_crotch_angle-30< live_crotch_angle < video_crotch_angle+30 ): 
                    # print('ok')
                   return 'ok'
                 # elif right_hip_angle>165:
