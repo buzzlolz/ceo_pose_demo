@@ -624,9 +624,188 @@ class BlazePose_inf():
 
           else:
             return None
-          
+
+  def calculateAngle3d(self,landmark1, landmark2, landmark3):
+  
+      
+      # print('landmark1',landmark1)
+      # Get the required landmarks coordinates.
+      x1, y1, z1 = landmark1
+      x2, y2, z2 = landmark2
+      x3, y3, z3 = landmark3
+      v1 = np.array([x2-x1,y2-y1,z2-z1])
+
+      v2 = np.array([x2-x3,y2-y3,z2-z3])
+      angle = vg.angle(v1,v2)
+      # Calculate the angle between the three points
+      # angle = math.degrees(math.atan2(y/s3 - y2, x3 - x2) - math.atan2(y1 - y2, x1 - x2))
+      
+      # Check if the angle is less than zero.
+      if angle <0:
+  
+          # Add 360 to the found angle.
+          # angle += 360
+          angle = 360+angle
+      
+      # Return the calculated angle.
+      return angle
+            
+
+  def get_each_keypoint_distance_3d(self,landmarks_video,landmarks_live,action_index):
+          # video_body_length = landmarks_video[mp_pose.PoseLandmark.RIGHT_KNEE.value]
+          video_pose_world_landmarks = []
+          live_pose_world_landmarks = []
+
+          if landmarks_video is not None and  landmarks_live is not None:
+            for landmark in landmarks_video.landmark:
+              video_pose_world_landmarks.append((landmark.x , landmark.y,landmark.z))
+            for landmark in landmarks_live.landmark:
+              live_pose_world_landmarks.append((landmark.x , landmark.y,landmark.z))
+
+            if len(live_pose_world_landmarks)>0 and len(video_pose_world_landmarks)>0:
+              # print(landmarks_video[mp_pose.PoseLandmark.LEFT_HIP.value])
+              # print(landmarks_video[mp_pose.PoseLandmark.RIGHT_HIP.value])
+              # crotch_point =( (np.array(landmarks_video[mp_pose.PoseLandmark.LEFT_HIP.value]) + np.array(landmarks_video[mp_pose.PoseLandmark.RIGHT_HIP.value]))/2).astype(int)
+              # # print(crotch_point)
+              # crotch_angle = self.calculateAngle(landmarks_video[mp_pose.PoseLandmark.LEFT_KNEE.value],
+              #                               crotch_point,
+              #                               landmarks_video[mp_pose.PoseLandmark.RIGHT_KNEE.value])
+
+              video_left_knee_angle= self.calculateAngle3d(video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_HIP.value],
+                                            video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value],
+                                            video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value])
+              video_right_knee_angle = self.calculateAngle3d(video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value],
+                                              video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value],
+                                              video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE.value])
+              video_crotch_point =( (np.array(video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]) + np.array(video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value]))/2).astype(int)
+              
+
+              video_crotch_angle = self.calculateAngle3d(video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value],
+                                            video_crotch_point,
+                                            video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value])
+              video_body_point = ( (np.array(video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]) + np.array(video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]))/2).astype(int)
+              video_right_hip_angle = self.calculateAngle3d(video_body_point,
+                                            video_crotch_point,
+                                            video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value])
+              video_left_hip_angle = self.calculateAngle3d(video_body_point,
+                                            video_crotch_point,
+                                            video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value])
+
+              
+              body_point = ( (np.array(live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]) + np.array(live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]))/2).astype(int)
+              crotch_point =( (np.array(live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]) + np.array(live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value]))/2).astype(int)
+              # print(crotch_point)
+              crotch_angle = self.calculateAngle3d(live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value],
+                                            crotch_point,
+                                            live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value])
+              left_knee_angle= self.calculateAngle3d(live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_HIP.value],
+                                            live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value],
+                                            live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value])
+              right_knee_angle = self.calculateAngle3d(live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value],
+                                              live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value],
+                                              live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE.value])
+              
+              right_hip_angle = self.calculateAngle3d(body_point,
+                                            video_crotch_point,
+                                            live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value])
+              left_hip_angle = self.calculateAngle3d(body_point,
+                                            crotch_point,
+                                            live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value])
 
 
+              live_crotch_angle = self.check_angle(crotch_angle)
+              # live_video_crotch_angle = self.check_angle(video_crotch_angle)
+              live_right_knee_angle = self.check_angle(right_knee_angle)
+              live_left_knee_angle = self.check_angle(left_knee_angle)
+              live_right_knee_angle = self.check_angle(right_knee_angle)
+
+
+              video_crotch_angle = self.check_angle(video_crotch_angle)
+              # live_video_crotch_angle = self.check_angle(video_crotch_angle)
+              video_right_knee_angle = self.check_angle(video_right_knee_angle)
+              video_left_knee_angle = self.check_angle(video_left_knee_angle)
+              # live_right_knee_angle = self.check_angle(right_knee_angle)
+ 
+
+              # print('crotch_angle',video_crotch_angle)
+              if action_index ==1:
+                # print('live_crotch_angle',live_crotch_angle)
+                # print('live_right_knee_angle',live_right_knee_angle)
+                # print('live_left_knee_angle',live_left_knee_angle)
+
+                # print('crotch_angle',video_crotch_angle)
+                # print('right_knee_angle',video_right_knee_angle)
+                # print('left_knee_angle',video_left_knee_angle)
+                
+                if (video_crotch_angle-25< live_crotch_angle < video_crotch_angle+25 )and (video_left_knee_angle-20 < live_left_knee_angle < video_left_knee_angle+20) and (video_right_knee_angle-20 < live_right_knee_angle < video_right_knee_angle+20) :
+                  print('ok')
+                  return 'ok'
+                else:
+                  print('need down')
+                  return 'sit'
+              elif action_index==2:
+                
+                if live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1]<live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1] and  (video_left_knee_angle-25 < live_left_knee_angle < video_left_knee_angle+25) : 
+                  # print('ok')
+                # if landmarks_live[mp_pose.PoseLandmark.LEFT_KNEE.value][1]<landmarks_live[mp_pose.PoseLandmark.RIGHT_KNEE.value][1]:
+                  return 'ok'
+                else:
+                  # print('raise_leg_left')
+                  return 'raise_leg_left'
+              elif action_index==3:
+                print('live_crotch_angle',live_crotch_angle)
+                print('live_right_knee_angle',live_right_knee_angle)
+                print('live_left_knee_angle',live_left_knee_angle)
+
+                print('crotch_angle',video_crotch_angle)
+                print('right_knee_angle',video_right_knee_angle)
+                print('left_knee_angle',video_left_knee_angle)
+
+                print(' live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1]', video_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1])
+                print(' live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1]', video_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1])
+                
+                if live_pose_world_landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value][1]<live_pose_world_landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value][1] and (video_right_knee_angle-25 < live_right_knee_angle < video_right_knee_angle+25) : 
+                  # print('ok')
+                  return 'ok'
+                else:
+                  # print('raise_leg_right')
+                  return 'raise_leg_right'
+              elif action_index==4:
+                print('crotch_angle',crotch_angle)
+                print('left_knee_angle',left_knee_angle)
+                # print('right knee angle',vidseo_right_knee_angle)
+                # print('left kenn angle',video_left_knee_angle)
+                # print('left knee point',landmarks_video[mp_pose.PoseLandmark.LEFT_KNEE.value])
+                # print('right knee point',landmarks_video[mp_pose.PoseLandmark.RIGHT_KNEE.value])
+                # print('video_crotch_angle',video_crotch_angle)
+                if (video_left_knee_angle-20 < live_left_knee_angle < video_left_knee_angle+20) and (video_crotch_angle-25< live_crotch_angle < video_crotch_angle+25 ): 
+                  # print('ok')
+                  return 'ok'
+                # elif right_hip_angle<200:
+                  # return 'straight_body'
+                else:
+                  # print('curve_left')
+                  return 'curve_left'
+              elif action_index==5:
+                print('video_right_hip_angle',video_right_hip_angle)
+                print('video_left_hip_angle',video_left_hip_angle)
+                # print('right knee angle',video_right_knee_angle)
+                # print('left kenn angle',video_left_knee_angle)
+                # print('left knee point',landmarks_video[mp_pose.PoseLandmark.LEFT_KNEE.value])
+                # print('right knee point',landmarks_video[mp_pose.PoseLandmark.RIGHT_KNEE.value])
+                # print('video_crotch_angle',video_crotch_angle)
+                if (video_right_knee_angle-20 < live_right_knee_angle < video_right_knee_angle+20) and (video_crotch_angle-25< live_crotch_angle < video_crotch_angle+25 ): 
+                   # print('ok')
+                  return 'ok'
+                # elif right_hip_angle>165:
+                  # return 'straight_body'
+                else:
+                  # print('curve_right')
+                  return 'curve_right'
+
+              else:
+                return None
+            
 
 # if __name__ == '__main__':
 #   a=BlazePose_inf()

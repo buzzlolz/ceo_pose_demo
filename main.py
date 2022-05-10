@@ -16,6 +16,7 @@ from matplotlib.animation import FuncAnimation
 import  time
 import random
 
+
 from PyQt5.QtMultimedia import *
 from PyQt5 import QtMultimedia
 from PyQt5.QtMultimediaWidgets import *
@@ -27,6 +28,8 @@ from typing import List, Mapping, Optional, Tuple, Union
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import location_data_pb2
 from mediapipe.framework.formats import landmark_pb2
+
+from scipy.spatial.transform import Rotation as R
 
 WHITE_COLOR = (224, 224, 224)
 BLACK_COLOR = (0, 0, 0)
@@ -136,7 +139,7 @@ class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         super(Ui,self).__init__()
         # self.sub_window = SubWindow()
-        self.window = uic.loadUi('compare_pose3.ui',self)
+        self.window = uic.loadUi('compare_pose4.ui',self)
         self.window.pushButton_load_video.clicked.connect(self.openFile)
         self.window.pushButton_start_video.clicked.connect(self.play)
         self.window.pushButton_update.clicked.connect(self.click_update)
@@ -153,11 +156,14 @@ class Ui(QtWidgets.QMainWindow):
         self.live_landmarks=[]
         self.df_csv=[]
         self.live_pose_world_landmarks= []
-        self.video_pose_world_landmarks= []
+        self.video_pose_world_landmarks= None
         self.video_world_npy_array = []
         self.pose_connection = ''
         self.response=''
+        self.pose3d_direction = ''
+        self.pose3d_waist_angle = ''
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        
         pygame.mixer.init()
 
         
@@ -168,7 +174,7 @@ class Ui(QtWidgets.QMainWindow):
 
         # Set widget
         self.videoWidget = QVideoWidget(self.window.centralwidget)
-        self.videoWidget.setGeometry(30, 10, 720, 480)
+        self.videoWidget.setGeometry(750, 30, 640, 480)
         # self.setCentralWidget(self.videoWidget)
         self.mediaPlayer.setVideoOutput(self.videoWidget)
 
@@ -218,20 +224,20 @@ class Ui(QtWidgets.QMainWindow):
         # self.count = 0
         # self.CamThread.frame_sig.connect()
         # layout = QtWidgets.QVBoxLayout(self.window)
-        # self.live_figure = plt.figure("live_figure") 
-        # self.live_ax = plt.axes(projection='3d')  # 三维坐标轴
+        self.live_figure = plt.figure("live_figure") 
+        self.live_ax = plt.axes(projection='3d')  # 三维坐标轴
 
-        # self.live_canvas = FigureCanvas(self.live_figure)         #增加画布
+        self.live_canvas = FigureCanvas(self.live_figure)         #增加画布
 
-        self.video_figure = plt.figure("video_figure") 
-        self.video_ax = plt.axes(projection='3d')  # 三维坐标轴
+        # self.video_figure = plt.figure("video_figure") 
+        # self.video_ax = plt.axes(projection='3d')  # 三维坐标轴
 
-        self.video_canvas = FigureCanvas(self.video_figure)         #增加画布
+        # self.video_canvas = FigureCanvas(self.video_figure)         #增加画布
         
         # # self.testwidget = QVideoWidget(self.window.centralwidget)
         # # self.testwidget.setGeometry(10, 10, 700, 700)
         # self.window.Vertalayout_live.addWidget(self.live_canvas)  
-        self.window.Vertalayout_video.addWidget(self.video_canvas) 
+        self.window.Vertalayout_video.addWidget(self.live_canvas) 
         self.mytimer = QTimer(self) 
         self.mytimer.timeout.connect(self.onTimer)
         self.mytimer.start(500)  
@@ -335,7 +341,8 @@ class Ui(QtWidgets.QMainWindow):
 
         self.window.horizontalSlider.setValue(position)
         
-        self.speak_mode=self.blazepose.get_each_keypoint_distance(self.video_landmarks,self.live_landmarks,self.action_index)
+        # self.speak_mode=self.blazepose.get_each_keypoint_distance(self.video_landmarks,self.live_landmarks,self.action_index)
+        self.speak_mode=self.blazepose.get_each_keypoint_distance_3d(self.video_pose_world_landmarks,self.live_pose_world_landmarks,self.action_index)
         
         # print('flash')
         # print('self.action index',self.action_index)
@@ -447,6 +454,12 @@ class Ui(QtWidgets.QMainWindow):
 
     def load_npy(self,video_name):
         npy_path = os.path.join('npy',video_name+'.npy')
+        self.video_keypoint_npy_array = np.load(npy_path,allow_pickle=True)
+        world_npy = os.path.join('npy',video_name+'_world.npy')
+        self.video_world_npy_array = np.load(world_npy,allow_pickle=True)
+        
+    def load_npy_3d(self,video_name):
+        npy_path = os.path.join('npy',video_name+'3d_.npy')
         self.video_keypoint_npy_array = np.load(npy_path,allow_pickle=True)
         world_npy = os.path.join('npy',video_name+'_world.npy')
         self.video_world_npy_array = np.load(world_npy,allow_pickle=True)
@@ -601,12 +614,55 @@ class Ui(QtWidgets.QMainWindow):
 
     def click_update(self):
         # self.canvas.draw_idle()
-        # self.live_anim = FuncAnimation(self.live_figure, self.live_plot_landmarks, interval=1000)
-        # self.live_anim._start()
-        self.video_anim  = FuncAnimation(self.video_figure, self.video_plot_landmarks, interval=400)
-        self.video_anim._start()
+        self.live_anim = FuncAnimation(self.live_figure, self.live_plot_landmarks, interval=400)
+        self.live_anim._start()
+        # self.video_anim  = FuncAnimation(self.video_figure, self.live_plot_landmarks, interval=400)
+        # self.video_anim._start()
     def _normalize_color(self,color):
         return tuple(v / 255. for v in color)
+
+
+
+    def rotate_3d(self,vec,angle):
+        # print('vec1',vec)
+        # print('angle r',angle)
+        if angle<0:
+            angle = 360+ angle
+
+        n_array =  [vec.x,vec.y,vec.z]
+
+        rotation_degrees = angle
+        rotation_radians = np.radians(rotation_degrees)
+        rotation_axis = np.array([0, 1, 0])
+
+        rotation_vector = rotation_radians * rotation_axis
+        rotation = R.from_rotvec(rotation_vector)
+        rotated_vec = rotation.apply(n_array)
+        # print('angle real',angle)
+        # print(rotated_vec)
+        # vec.x = n_array[0]
+        # vec.y = n_array[1]
+        # vec.z = n_array[2]
+        # print('vec',vec.x)
+        # print('r',)
+        return rotated_vec[0],rotated_vec[1],rotated_vec[2]
+        
+
+    def get_3d_angle(self,a1,a2):
+        a1= np.array(a1)
+        a2=np.array(a2)
+        l_a1 = np.sqrt(a1.dot(a1))
+        l_a2 = np.sqrt(a2.dot(a2))
+        # print('la1 la2',l_a1,l_a2)
+        dia = a1.dot(a2)
+        # print('dia',dia)
+        cos = dia/(l_a1*l_a2)
+        # print('cos',cos)
+        angle = np.arccos(cos)
+        # print('angle',angle)
+        real_angle = angle*180/np.pi
+        # print('angle2',angle2)
+        return  real_angle
         
     def live_plot_landmarks(self,landmark_list: landmark_pb2.NormalizedLandmarkList,
                     connections: Optional[List[Tuple[int, int]]] = None,
@@ -636,6 +692,18 @@ class Ui(QtWidgets.QMainWindow):
         self.live_ax.clear()
         if not self.live_pose_world_landmarks:
             return
+        if self.live_pose_world_landmarks.landmark[23].y-self.live_pose_world_landmarks.landmark[24].y>0:
+            self.pose3d_direction =True
+        vec_waist  = [self.live_pose_world_landmarks.landmark[23].x-self.live_pose_world_landmarks.landmark[24].x,self.live_pose_world_landmarks.landmark[23].y-self.live_pose_world_landmarks.landmark[24].y,self.live_pose_world_landmarks.landmark[23].z-self.live_pose_world_landmarks.landmark[24].z]
+        # print(new_a1)
+        self.pose3d_waist_angle = self.get_3d_angle(vec_waist,[1,0,0])
+        # print('self.pose3d_waist_angle',self.pose3d_waist_angle)
+        if  not self.pose3d_direction and self.pose3d_direction!='':
+            pass
+       
+        else:
+            if self.pose3d_waist_angle!='':
+                self.pose3d_waist_angle = -self.pose3d_waist_angle 
         # self.fig = plt.figure()
         # self.ax = plt.axes(projection='3d')
         self.live_ax.view_init(elev=elevation, azim=azimuth)
@@ -649,14 +717,18 @@ class Ui(QtWidgets.QMainWindow):
                 (landmark.HasField('presence') and
                 landmark.presence < _PRESENCE_THRESHOLD)):
                 continue
-            # print('landmark.z',landmark.z)
+            # print('landmark',landmark)
+            x_p,y_p,z_p = self.rotate_3d(landmark,self.pose3d_waist_angle)
+            # print('change',x_p,y_p,z_p)
+            # x_p,y_p,z_p = landmark.x,landmark.y,landmark.z
+            # print('change',x_p,y_p,z_p)
             self.live_ax.scatter3D(
-                xs=[-landmark.z],
-                ys=[landmark.x],
-                zs=[-landmark.y],
+                xs=[-z_p],
+                ys=[x_p],
+                zs=[-y_p],
                 color=self._normalize_color(landmark_drawing_spec.color[::-1]),
                 linewidth=landmark_drawing_spec.thickness)
-            plotted_landmarks[idx] = (-landmark.z, landmark.x, -landmark.y)
+            plotted_landmarks[idx] = (-z_p, x_p, -y_p)
         if self.pose_connection:
             num_landmarks = len(self.live_pose_world_landmarks.landmark)
             # Draws the connections if the start and end landmarks are both visible.

@@ -54,10 +54,10 @@ def video_pose2npy(video_path):
 
 
 if __name__ == "__main__":
-    video_path='./video/video4.mp4'
-    total_list = video_pose2npy(video_path)
-    nptotal = np.array(total_list)
-    np.save('video4_world', nptotal)
-    # a=np.load('video1_world.npy',allow_pickle=True)
-    # print(len(a))
-    # print(a[0])
+    # video_path='./video/video4.mp4'
+    # total_list = video_pose2npy(video_path)
+    # nptotal = np.array(total_list)
+    # np.save('video4_world', nptotal)
+    a=np.load('video1_world.npy',allow_pickle=True)
+    print(len(a))
+    print(type(a[0]))
